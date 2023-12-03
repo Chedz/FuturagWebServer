@@ -1,0 +1,64 @@
+<html>
+<head>
+</head>
+<body>
+    <canvas id = "idCanvas" style = "border:2px solid #000000; position:fixed; top: 0; bottom: 0; left: 0; right: 0; pointer-events:none;">
+        Your browser does not support the HTML5 canvas tag.
+    </canvas>
+  <form id="input-form">
+    <label for="message">Enter Message:</label>
+    <input type="text" id="message" name="message"><br><br>
+    <input type="submit" value="Send">
+  </form>
+  <div id="messages"></div>
+  <script>
+    const webSocket = new WebSocket('ws://localhost:443/');
+    webSocket.onmessage = (event) => {
+    //   console.log(event);
+
+      let incomingDataObj = JSON.parse(event.data);
+
+      if(incomingDataObj.message){
+        document.getElementById('messages').innerHTML += 
+            'Message from server: ' + incomingDataObj.message + "<br>";
+      }
+      else if(incomingDataObj.mousePoint){
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.fillRect(incomingDataObj.mousePoint.x,incomingDataObj.mousePoint.y,10,10); 
+      }
+    };
+    webSocket.addEventListener("open", () => {
+      console.log("We are connected");
+    });
+    function sendMessage(event) {
+      var inputMessage = document.getElementById('message')
+      webSocket.send(JSON.stringify({"message":inputMessage.value}));
+      inputMessage.value = ""
+      event.preventDefault();
+    }
+    document.getElementById('input-form').addEventListener('submit', sendMessage);
+
+    // functionSendMousePosition(){
+
+    // }
+
+    //resize canvas
+    let canvas = document.getElementById("idCanvas");
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const context = canvas.getContext('2d');
+
+
+    document.addEventListener('mousemove', (e) => {
+        // console.log(`Mouse X: ${e.clientX}, Mouse Y: ${e.clientY}`);
+        webSocket.send(JSON.stringify({"mousePoint":{
+            "x":e.clientX,
+            "y":e.clientY
+        }}));
+
+        // context.clearRect(0, 0, canvas.width, canvas.height);
+        // context.fillRect(e.clientX,e.clientY,10,10); 
+    });
+  </script>
+</body>
+</html>
